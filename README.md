@@ -64,3 +64,13 @@ make backtest FROM=2024-01-01 TO=2025-01-31 SYMBOLS=TQQQ
   - `rsi_period`, `stoch_period`, `k_period`, `d_period`, `overbought`, `oversold`
   - `add_cooldown_sec`: minimum seconds between buys per symbol
   - `take_profit_pct`: sell all when `last_px >= avg_px * (1 + pct)` (default 0.11)
+ - Per‑symbol overrides supported under `symbols.<SYMBOL>`, merged onto globals. Example:
+   ```yaml
+   symbols:
+     TQQQ:
+       strategy: { take_profit_pct: 0.11, oversold: 20, overbought: 80 }
+       slices:   { per_entry_lt20: 2, per_entry_20_80: 2 }
+     SOXL:
+       strategy: { take_profit_pct: 0.14, oversold: 25, overbought: 75 }
+       slices:   { per_entry_lt20: 2, per_entry_20_80: 2 }
+   ```

@@ -25,3 +25,24 @@ execution: { type: market, slippage_bps: 3 }
 postgres: { dsn: "postgresql+asyncpg://user:pass@localhost:5432/kisbot" }
 opensearch: { index_prefix: bot-logs, shipper: filebeat }
 slack: { webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ" }
+
+# Optional per-symbol overrides (merge onto globals above)
+symbols:
+  TQQQ:
+    strategy:
+      take_profit_pct: 0.11
+      oversold: 20
+      overbought: 80
+      add_cooldown_sec: 45
+    slices:
+      per_entry_lt20: 2
+      per_entry_20_80: 2
+  SOXL:
+    strategy:
+      take_profit_pct: 0.14
+      oversold: 25
+      overbought: 75
+      add_cooldown_sec: 45
+    slices:
+      per_entry_lt20: 2
+      per_entry_20_80: 2

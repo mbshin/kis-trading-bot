@@ -8,12 +8,32 @@ from kisbot.infra.logger import log
 from kisbot.services.executor import Executor
 from kisbot.db import crud
 
+def _merge_dicts(base: dict, overlay: dict) -> dict:
+    out = dict(base)
+    for k, v in (overlay or {}).items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _merge_dicts(out[k], v)
+        else:
+            out[k] = v
+    return out
+
+
 async def run_bot(cfg):
     symbols = cfg['universe']
     ex = Executor(cfg)
-    stoch = {s: StochRSI(cfg['strategy']['rsi_period'], cfg['strategy']['stoch_period'], cfg['strategy']['k_period'], cfg['strategy']['d_period']) for s in symbols}
-    books = {s: SliceBook(cfg['risk']['equity'], cfg['slices']['total']) for s in symbols}
-    traders = {s: KDTrader(s, books[s], cfg) for s in symbols}
+
+    def cfg_for(sym: str) -> dict:
+        return _merge_dicts(cfg, (cfg.get('symbols') or {}).get(sym, {}))
+
+    stoch = {}
+    books = {}
+    traders = {}
+    for s in symbols:
+        scfg = cfg_for(s)
+        strat = scfg['strategy']
+        stoch[s] = StochRSI(strat['rsi_period'], strat['stoch_period'], strat['k_period'], strat['d_period'])
+        books[s] = SliceBook(scfg['risk']['equity'], scfg['slices']['total'])
+        traders[s] = KDTrader(s, books[s], scfg)
 
     def on_tick(sym: str, price: float, now: float):
         k, d = stoch[sym].update(price)

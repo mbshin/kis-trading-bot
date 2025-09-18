@@ -74,6 +74,16 @@ class SimState:
         self.avg_px = 0.0
 
 
+def _merge_dicts(base: dict, overlay: dict) -> dict:
+    out = dict(base)
+    for k, v in (overlay or {}).items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _merge_dicts(out[k], v)
+        else:
+            out[k] = v
+    return out
+
+
 async def backtest(cfg, from_date: str, to_date: str, symbols: list[str]):
     bars_cfg = cfg.get("bars", {})
     mode = bars_cfg.get("type", "tick")
@@ -82,9 +92,10 @@ async def backtest(cfg, from_date: str, to_date: str, symbols: list[str]):
 
     results = []
     for sym in symbols:
-        stoch = StochRSI(cfg['strategy']['rsi_period'], cfg['strategy']['stoch_period'], cfg['strategy']['k_period'], cfg['strategy']['d_period'])
-        book = SliceBook(cfg['risk']['equity'], cfg['slices']['total'])
-        trader = KDTrader(sym, book, cfg)
+        scfg = _merge_dicts(cfg, (cfg.get('symbols') or {}).get(sym, {}))
+        stoch = StochRSI(scfg['strategy']['rsi_period'], scfg['strategy']['stoch_period'], scfg['strategy']['k_period'], scfg['strategy']['d_period'])
+        book = SliceBook(scfg['risk']['equity'], scfg['slices']['total'])
+        trader = KDTrader(sym, book, scfg)
         sim = SimState()
 
         def place(symbol: str, side: str, qty: int, type_: str):
