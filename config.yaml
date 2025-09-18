@@ -47,7 +47,7 @@ symbols:
       per_entry_lt20: 2
       per_entry_20_80: 2
     risk:
-      equity: 10000
+      equity: 40000
   TQQQ:
     strategy:
       take_profit_pct: 0.11
@@ -58,4 +58,4 @@ symbols:
       per_entry_lt20: 2
       per_entry_20_80: 2
     risk:
-      equity: 30000
+      equity: 100000
