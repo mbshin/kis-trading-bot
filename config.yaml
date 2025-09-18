@@ -1,0 +1,26 @@
+mode: paper
+universe: ["TQQQ", "SPXL", "SOXL"]
+ws: { reconnect_base: 1, reconnect_max: 30 }
+bars: { type: tick }
+strategy:
+  rsi_period: 14
+  stoch_period: 14
+  k_period: 3
+  d_period: 3
+  overbought: 80
+  oversold: 20
+  confirm_ticks: 1
+  add_cooldown_sec: 45
+slices:
+  total: 60
+  per_entry_lt20: 4
+  per_entry_20_80: 1
+risk:
+  equity: 12000
+  daily_loss_limit: -200
+  max_positions: 1
+  max_total_exposure: 15000
+execution: { type: market, slippage_bps: 3 }
+postgres: { dsn: "postgresql+asyncpg://user:pass@localhost:5432/kisbot" }
+opensearch: { index_prefix: bot-logs, shipper: filebeat }
+slack: { webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ" }
