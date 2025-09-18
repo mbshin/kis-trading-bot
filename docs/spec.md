@@ -1,12 +1,52 @@
-# KIS US 3x ETF Trading Bot — Minimal Spec (v0.3, ORM)
+# KIS US 3x ETF Trading Bot — Spec (v0.6)
 
 **Owner:** Mobum Shin · **Date:** 2025‑09‑18 (KST)
 
 ## Objective
-Trade **3× US ETFs** via **KIS API** using **StochRSI K/D** and a **60‑slice bankroll**. Persist to **PostgreSQL** via **SQLAlchemy 2.0 (async + asyncpg)**; ship JSON logs to **OpenSearch**; send **Slack** alerts; provide a **backtesting** CLI.
+Trade **3× US ETFs** via **KIS API** using **StochRSI K/D** and a **60‑slice bankroll**. Persist to **PostgreSQL** (SQLAlchemy 2 async), JSON logs to **OpenSearch**, **Slack** alerts, and a **CLI** for live run and historical backtests.
 
 ## Strategy Rules (Slice Model)
-- **Bankroll:** 60 slices; `slice_value = floor(equity/60)`.
-- **Buy:** K<20 → BUY 4 slices; 20≤K<80 and **K↑D** → BUY 1 slice; K≥80 → no buys.
-- **Sell:** **K↓D** and **K>80** → SELL ALL.
-- Safeguards: add_cooldown_sec (45s), never exceed 60 slices; optional ATR stop.
+- Bankroll: 60 slices; `slice_value = floor(equity/60)` (config: `risk.equity`, `slices.total`).
+- Buy:
+  - K < oversold → buy `slices.per_entry_lt20`
+  - oversold ≤ K < overbought and K↑D → buy `slices.per_entry_20_80`
+  - Optional trend filter: only buy if `last_px > SMA(trend_sma_period)`
+  - Optional RSI buy: if flat and `RSI < rsi_buy_threshold`, start buying at `base_px × rsi_buy_multiplier` using LOC (Limit-On-Close).
+    - Once in position, continue buying (subject to cooldown/slices) regardless of RSI until a full exit (sell/stop-loss).
+    - Place at most one BUY per UTC day (once-a-day rule).
+    - `base_px = avg_px` if in position else `last_px`
+    - sizing uses `slices.per_entry_20_80`
+    - respects `add_cooldown_sec`
+- Sell:
+  - K↓D and K > overbought → sell all
+  - Take‑Profit: sell all if `last_px ≥ avg_px × (1 + take_profit_pct)`
+  - Stop‑Loss: sell all if `last_px ≤ avg_px × (1 − stop_loss_pct)`
+- Safeguards: `add_cooldown_sec` (default 45s), cap at total slices.
+
+## Backtesting
+- Data: synthetic or CSV (`bars: { type: csv, data_dir, column }`); supports daily and intraday (e.g., 1h) bars.
+- Loader: Yahoo CSV (`Date` + `Close`/`Adj Close`) or generic (`timestamp` + `close`), UTC-safe parsing.
+- PnL: realized on close; end-of-period unrealized = `(last_px - avg_px) × qty`.
+- Reports: aggregate totals; CLI supports `--out-json` and `--out-csv`.
+- Helpers: `make data` (yfinance), `make backtest`, `scripts/optimize.py` (sweeps TP/SL/trend/bands/cooldown/slices).
+
+## CLI
+- `kisbot run --config config.yaml`
+- `kisbot backtest --config config.yaml --from YYYY-MM-DD --to YYYY-MM-DD --symbols TQQQ,SOXL`
+
+## Code Layout
+- `src/kisbot/core`: indicators (WilderRSI, StochRSI), slice model, trader (KDTrader)
+- `src/kisbot/services`: executor, orchestration
+- `src/kisbot/infra`: backtest, logger, ws/rest, slack
+- `src/kisbot/db`: async engine/session, models, CRUD; Alembic in `alembic/`
+
+## Configuration
+- Global config with per‑symbol overrides under `symbols.<SYMBOL>` for `strategy`, `slices`, and `risk`.
+- Example: TQQQ uses TP 0.11 with bands 20/80; SOXL uses TP 0.14, SL 0.10, trend SMA 100, bands 20/85.
+ - Optional RSI buy keys under `strategy`:
+   - `rsi_buy_threshold` (default 50): trigger threshold for RSI buy
+   - `rsi_buy_multiplier` (default 1.1): limit price multiplier applied to `base_px`
+
+## Testing & Tooling
+- Tests: `pytest` (`tests/`), `make test`
+- Dev: `make dev` (installs deps), formatting/lint optional (`black`, `ruff`)

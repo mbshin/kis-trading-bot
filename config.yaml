@@ -11,12 +11,19 @@ strategy:
   oversold: 20
   confirm_ticks: 1
   add_cooldown_sec: 45
+  take_profit_pct: 0.11  # sell all if last_px >= avg_px * (1 + pct)
+  enable_kd_buys: false
+  # RSI buy rule (optional)
+  # If provided, bot buys when RSI < rsi_buy_threshold at price = base * rsi_buy_multiplier
+  # base price is avg_px if in position, else last_px
+  # rsi_buy_threshold: 50
+  # rsi_buy_multiplier: 1.1
 slices:
   total: 60
-  per_entry_lt20: 4
-  per_entry_20_80: 1
+  per_entry_lt20: 2
+  per_entry_20_80: 2
 risk:
-  equity: 12000
+  equity: 40000
   daily_loss_limit: -200
   max_positions: 1
   max_total_exposure: 15000
@@ -24,3 +31,39 @@ execution: { type: market, slippage_bps: 3 }
 postgres: { dsn: "postgresql+asyncpg://user:pass@localhost:5432/kisbot" }
 opensearch: { index_prefix: bot-logs, shipper: filebeat }
 slack: { webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ" }
+
+# Optional per-symbol overrides (merge onto globals above)
+symbols:
+  TQQQ:
+    strategy:
+      take_profit_pct: 0.11
+      oversold: 20
+      overbought: 80
+      add_cooldown_sec: 45
+    slices:
+      per_entry_lt20: 2
+      per_entry_20_80: 2
+  SOXL:
+    strategy:
+      take_profit_pct: 0.14
+      stop_loss_pct: 0.10
+      oversold: 20
+      overbought: 85
+      add_cooldown_sec: 45
+      trend_sma_period: 100
+    slices:
+      per_entry_lt20: 2
+      per_entry_20_80: 1
+    risk:
+      equity: 40000
+  TQQQ:
+    strategy:
+      take_profit_pct: 0.11
+      oversold: 20
+      overbought: 80
+      add_cooldown_sec: 45
+    slices:
+      per_entry_lt20: 2
+      per_entry_20_80: 2
+    risk:
+      equity: 100000
