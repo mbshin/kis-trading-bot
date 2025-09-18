@@ -65,18 +65,28 @@ make backtest FROM=2024-01-01 TO=2025-01-31 SYMBOLS=TQQQ
   - `rsi_period`, `stoch_period`, `k_period`, `d_period`, `overbought`, `oversold`
   - `add_cooldown_sec`: minimum seconds between buys per symbol
   - `take_profit_pct`: sell all when `last_px >= avg_px * (1 + pct)` (default 0.11)
+  - `stop_loss_pct`: sell all when `last_px <= avg_px * (1 - pct)` (optional)
+  - `trend_sma_period`: only buy if `last_px > SMA(period)`; disable with `0`
  - Per‑symbol overrides supported under `symbols.<SYMBOL>`, merged onto globals. Example:
    ```yaml
    symbols:
      TQQQ:
        strategy: { take_profit_pct: 0.11, oversold: 20, overbought: 80 }
        slices:   { per_entry_lt20: 2, per_entry_20_80: 2 }
+       risk:     { equity: 100000 }
      SOXL:
-       strategy: { take_profit_pct: 0.14, oversold: 25, overbought: 75 }
-       slices:   { per_entry_lt20: 2, per_entry_20_80: 2 }
+       strategy: { take_profit_pct: 0.14, stop_loss_pct: 0.10, trend_sma_period: 100, oversold: 20, overbought: 85 }
+       slices:   { per_entry_lt20: 2, per_entry_20_80: 1 }
+       risk:     { equity: 40000 }
    ```
+  - Risk can be weighted per symbol via `symbols.<SYMBOL>.risk.equity`.
 
 ## Aggregated Reports
 - The backtest CLI can emit both JSON and CSV:
   - `--out-json reports/backtest.json` writes run_id, per-symbol metrics, and aggregate totals.
   - `--out-csv reports/backtest.csv` writes rows per symbol and a `__TOTAL__` summary line.
+
+## Optimization
+- Script: `python3 scripts/optimize.py --symbol TQQQ --from YYYY-MM-DD --to YYYY-MM-DD --config config.yaml`
+- Sweeps key params (e.g., `take_profit_pct`, `stop_loss_pct`, `trend_sma_period`, bands, cooldown, slices) and ranks by realized PnL.
+- Tip: Use intraday data (e.g., `INTERVAL=1h`) for leveraged tickers like SOXL.
