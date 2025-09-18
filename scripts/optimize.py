@@ -26,11 +26,13 @@ def parse_args():
 def grid():
     # Keep small to run quickly; adjust as needed
     return {
-        "strategy.take_profit_pct": [0.08, 0.10, 0.11, 0.12, 0.14],
+        "strategy.take_profit_pct": [0.10, 0.12, 0.14, 0.16],
+        "strategy.stop_loss_pct": [None, 0.06, 0.08, 0.10, 0.12],
+        "strategy.trend_sma_period": [0, 50, 100, 200],
         "strategy.oversold": [15, 20, 25],
-        "strategy.overbought": [75, 80, 85],
-        "strategy.add_cooldown_sec": [30, 45, 60],
-        "slices.per_entry_lt20": [2, 4, 6],
+        "strategy.overbought": [80, 85],
+        "strategy.add_cooldown_sec": [30, 60, 90],
+        "slices.per_entry_lt20": [2, 4],
         "slices.per_entry_20_80": [1, 2],
     }
 
@@ -76,4 +78,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

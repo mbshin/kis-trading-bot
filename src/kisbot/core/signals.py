@@ -9,6 +9,10 @@ class KDTrader:
         self.prev_k = None
         self.prev_d = None
         self.last_add_ts = 0
+        # Optional trend filter SMA on price
+        from kisbot.core.indicators import RollingSMA
+        tp = self.cfg['strategy'].get('trend_sma_period', 0)
+        self.trend_sma = RollingSMA(tp) if tp and tp > 0 else None
     def _cooldown_ok(self, now):
         return (now - self.last_add_ts) >= self.cfg['strategy']['add_cooldown_sec']
     def on_kd(self, k: float, d: float, last_px: float, now: float,
@@ -17,8 +21,24 @@ class KDTrader:
         self.prev_k, self.prev_d = k, d
         if equity_fetch:
             self.book.equity = equity_fetch()
+        # Update trend SMA and enforce filter if configured
+        if self.trend_sma is not None:
+            sma = self.trend_sma.update(last_px)
+        else:
+            sma = None
+
+        # SELL: stop-loss if price falls below threshold from avg_px
+        sl_pct = self.cfg['strategy'].get('stop_loss_pct')
+        if self.position_qty > 0 and self.avg_px > 0 and sl_pct:
+            if last_px <= self.avg_px * (1.0 - sl_pct):
+                place_order(self.symbol, "SELL", self.position_qty, "MKT")
+                self.position_qty = 0
+                self.avg_px = 0.0
+                self.book.free_all()
+                return
         # BUY bands
-        if self._cooldown_ok(now) and last_px > 0:
+        trend_ok = True if self.trend_sma is None else (sma is not None and last_px > sma)
+        if self._cooldown_ok(now) and last_px > 0 and trend_ok:
             # K < 20 -> 4 slices
             if k < self.cfg['strategy']['oversold']:
                 per_entry = self.cfg['slices']['per_entry_lt20']

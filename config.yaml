@@ -40,12 +40,14 @@ symbols:
   SOXL:
     strategy:
       take_profit_pct: 0.14
-      oversold: 25
-      overbought: 75
+      stop_loss_pct: 0.10
+      oversold: 20
+      overbought: 85
       add_cooldown_sec: 45
+      trend_sma_period: 100
     slices:
       per_entry_lt20: 2
-      per_entry_20_80: 2
+      per_entry_20_80: 1
     risk:
       equity: 40000
   TQQQ:
