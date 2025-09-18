@@ -137,6 +137,16 @@ async def backtest(cfg, from_date: str, to_date: str, symbols: list[str]):
             "slices_in_use_end": book.slices_in_use,
         })
 
-    out = {"run_id": str(uuid.uuid4()), "metrics": results}
+    agg_realized = round(sum(m.get("realized_pnl", 0.0) for m in results), 2)
+    agg_unrealized = round(sum(m.get("unrealized_pnl", 0.0) for m in results), 2)
+    out = {
+        "run_id": str(uuid.uuid4()),
+        "metrics": results,
+        "aggregate": {
+            "symbols": len(results),
+            "total_realized_pnl": agg_realized,
+            "total_unrealized_pnl": agg_unrealized,
+        },
+    }
     print(out)
     return out

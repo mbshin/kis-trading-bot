@@ -43,7 +43,8 @@ bars:
   - Yahoo format: `Date`, `Close` (or `Adj Close` when column=adj_close)
 - Run:
 ```bash
-kisbot backtest --config config.yaml --from 2024-01-01 --to 2025-01-31 --symbols TQQQ
+kisbot backtest --config config.yaml --from 2024-01-01 --to 2025-01-31 --symbols TQQQ,SOXL \
+  --out-json reports/backtest.json --out-csv reports/backtest.csv
 ```
 The backtest reports realized/unrealized PnL per symbol using a simple fill model (market at close price per row).
 
@@ -74,3 +75,8 @@ make backtest FROM=2024-01-01 TO=2025-01-31 SYMBOLS=TQQQ
        strategy: { take_profit_pct: 0.14, oversold: 25, overbought: 75 }
        slices:   { per_entry_lt20: 2, per_entry_20_80: 2 }
    ```
+
+## Aggregated Reports
+- The backtest CLI can emit both JSON and CSV:
+  - `--out-json reports/backtest.json` writes run_id, per-symbol metrics, and aggregate totals.
+  - `--out-csv reports/backtest.csv` writes rows per symbol and a `__TOTAL__` summary line.
