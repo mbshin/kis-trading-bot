@@ -5,6 +5,7 @@ class KDTrader:
         self.book = slice_book
         self.cfg = cfg
         self.position_qty = 0
+        self.avg_px = 0.0
         self.prev_k = None
         self.prev_d = None
         self.last_add_ts = 0
@@ -27,6 +28,8 @@ class KDTrader:
                     if qty > 0:
                         place_order(self.symbol, "BUY", qty, "MKT")
                         self.position_qty += qty
+                        # update avg price after buy
+                        self.avg_px = ((self.avg_px * (self.position_qty - qty)) + last_px * qty) / max(self.position_qty, 1)
                         self.last_add_ts = now
             # 20 ≤ K < 80 and K↑D -> 1 slice
             elif self.cfg['strategy']['oversold'] <= k < self.cfg['strategy']['overbought']:
@@ -39,6 +42,8 @@ class KDTrader:
                         if qty > 0:
                             place_order(self.symbol, "BUY", qty, "MKT")
                             self.position_qty += qty
+                            # update avg price after buy
+                            self.avg_px = ((self.avg_px * (self.position_qty - qty)) + last_px * qty) / max(self.position_qty, 1)
                             self.last_add_ts = now
             # K ≥ 80 -> no buys
         # SELL: K↓D and K>80 -> sell all
@@ -46,4 +51,13 @@ class KDTrader:
         if bearish and k > self.cfg['strategy']['overbought'] and self.position_qty > 0:
             place_order(self.symbol, "SELL", self.position_qty, "MKT")
             self.position_qty = 0
+            self.avg_px = 0.0
+            self.book.free_all()
+
+        # SELL: take-profit if last_px >= avg_px * (1 + take_profit_pct)
+        tp_pct = self.cfg['strategy'].get('take_profit_pct', 0.11)
+        if self.position_qty > 0 and self.avg_px > 0 and last_px >= self.avg_px * (1.0 + tp_pct):
+            place_order(self.symbol, "SELL", self.position_qty, "MKT")
+            self.position_qty = 0
+            self.avg_px = 0.0
             self.book.free_all()

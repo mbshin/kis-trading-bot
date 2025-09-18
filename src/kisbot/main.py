@@ -31,7 +31,7 @@ def run(config: Path = typer.Option(..., exists=True, readable=True)):
     asyncio.run(run_bot(cfg.model_dump()))
 
 @app.command()
-def backtest_cmd(config: Path, from_: str, to: str, symbols: str = "TQQQ"):
+def backtest(config: Path, from_: str, to: str, symbols: str = "TQQQ"):
     cfg = AppConfig.model_validate(yaml.safe_load(config.read_text()))
     logmod.configure_json_logging(cfg.opensearch.get("index_prefix", "bot-logs"))
     asyncio.run(backtest(cfg.model_dump(), from_, to, symbols.split(",")))
