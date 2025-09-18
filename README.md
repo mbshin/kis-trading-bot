@@ -67,6 +67,24 @@ make backtest FROM=2024-01-01 TO=2025-01-31 SYMBOLS=TQQQ
   - `take_profit_pct`: sell all when `last_px >= avg_px * (1 + pct)` (default 0.11)
   - `stop_loss_pct`: sell all when `last_px <= avg_px * (1 - pct)` (optional)
   - `trend_sma_period`: only buy if `last_px > SMA(period)`; disable with `0`
+  - `enable_kd_buys`: toggle K/D-based buys (default: true)
+
+### RSI Buy (optional)
+- If enabled via config, an additional RSI-based buy path is available:
+  - Entry when flat: if `RSI < rsi_buy_threshold`, place a buy using LOC (Limit-On-Close).
+  - While in position: continue placing a daily LOC buy (subject to `add_cooldown_sec` and slices) until the position fully exits by sell/stop-loss.
+  - Price: LOC limit set to `base_px * rsi_buy_multiplier`, where `base_px = avg_px` if in position else `last_px`.
+  - Sizing: uses `slices.per_entry_20_80` for notional.
+- Config keys under `strategy`:
+  - `rsi_buy_threshold` (default 50)
+  - `rsi_buy_multiplier` (default 1.1)
+  - Example (defaults shown commented in config.yaml):
+    ```yaml
+    strategy:
+      # rsi_buy_threshold: 50
+      # rsi_buy_multiplier: 1.1
+      # enable_kd_buys: true
+    ```
  - Per‑symbol overrides supported under `symbols.<SYMBOL>`, merged onto globals. Example:
    ```yaml
    symbols:
@@ -88,5 +106,14 @@ make backtest FROM=2024-01-01 TO=2025-01-31 SYMBOLS=TQQQ
 
 ## Optimization
 - Script: `python3 scripts/optimize.py --symbol TQQQ --from YYYY-MM-DD --to YYYY-MM-DD --config config.yaml`
-- Sweeps key params (e.g., `take_profit_pct`, `stop_loss_pct`, `trend_sma_period`, bands, cooldown, slices) and ranks by realized PnL.
+- Sweeps key params and ranks by realized PnL. The default "small" grid includes:
+  - `take_profit_pct`, `stop_loss_pct`, `trend_sma_period`
+  - RSI params: `rsi_buy_threshold`, `rsi_buy_multiplier`
+  - `enable_kd_buys` toggle
+  - You can expand to a broader grid in the script if needed.
 - Tip: Use intraday data (e.g., `INTERVAL=1h`) for leveraged tickers like SOXL.
+
+## Recent Changes
+- Added optional RSI buy flow with once-per-UTC-day LOC orders and continued daily buys while in position.
+- Introduced `strategy.enable_kd_buys` to toggle K/D-based entries.
+- Extended optimizer to search RSI parameters and KD toggle.

@@ -12,6 +12,12 @@ strategy:
   confirm_ticks: 1
   add_cooldown_sec: 45
   take_profit_pct: 0.11  # sell all if last_px >= avg_px * (1 + pct)
+  enable_kd_buys: false
+  # RSI buy rule (optional)
+  # If provided, bot buys when RSI < rsi_buy_threshold at price = base * rsi_buy_multiplier
+  # base price is avg_px if in position, else last_px
+  # rsi_buy_threshold: 50
+  # rsi_buy_multiplier: 1.1
 slices:
   total: 60
   per_entry_lt20: 2

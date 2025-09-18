@@ -1,4 +1,4 @@
-# KIS US 3x ETF Trading Bot — Spec (v0.5)
+# KIS US 3x ETF Trading Bot — Spec (v0.6)
 
 **Owner:** Mobum Shin · **Date:** 2025‑09‑18 (KST)
 
@@ -11,6 +11,12 @@ Trade **3× US ETFs** via **KIS API** using **StochRSI K/D** and a **60‑slice 
   - K < oversold → buy `slices.per_entry_lt20`
   - oversold ≤ K < overbought and K↑D → buy `slices.per_entry_20_80`
   - Optional trend filter: only buy if `last_px > SMA(trend_sma_period)`
+  - Optional RSI buy: if flat and `RSI < rsi_buy_threshold`, start buying at `base_px × rsi_buy_multiplier` using LOC (Limit-On-Close).
+    - Once in position, continue buying (subject to cooldown/slices) regardless of RSI until a full exit (sell/stop-loss).
+    - Place at most one BUY per UTC day (once-a-day rule).
+    - `base_px = avg_px` if in position else `last_px`
+    - sizing uses `slices.per_entry_20_80`
+    - respects `add_cooldown_sec`
 - Sell:
   - K↓D and K > overbought → sell all
   - Take‑Profit: sell all if `last_px ≥ avg_px × (1 + take_profit_pct)`
@@ -37,6 +43,9 @@ Trade **3× US ETFs** via **KIS API** using **StochRSI K/D** and a **60‑slice 
 ## Configuration
 - Global config with per‑symbol overrides under `symbols.<SYMBOL>` for `strategy`, `slices`, and `risk`.
 - Example: TQQQ uses TP 0.11 with bands 20/80; SOXL uses TP 0.14, SL 0.10, trend SMA 100, bands 20/85.
+ - Optional RSI buy keys under `strategy`:
+   - `rsi_buy_threshold` (default 50): trigger threshold for RSI buy
+   - `rsi_buy_multiplier` (default 1.1): limit price multiplier applied to `base_px`
 
 ## Testing & Tooling
 - Tests: `pytest` (`tests/`), `make test`

@@ -37,6 +37,11 @@ async def run_bot(cfg):
 
     def on_tick(sym: str, price: float, now: float):
         k, d = stoch[sym].update(price)
+        # Attempt RSI-based buy path when RSI is available
+        rsi_val = stoch[sym].rsi.last
+        if rsi_val is not None:
+            traders[sym].on_rsi(rsi_val, price, now,
+                                place_order=lambda sy, si, q, t, px: asyncio.create_task(ex.place(sy, si, q, t, px)))
         if k is None or d is None:
             return
         asyncio.create_task(crud.insert_signal(sym, side="TICK", k=k, d=d))

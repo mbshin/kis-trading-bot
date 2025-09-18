@@ -84,7 +84,7 @@ def _merge_dicts(base: dict, overlay: dict) -> dict:
     return out
 
 
-async def backtest(cfg, from_date: str, to_date: str, symbols: list[str]):
+async def backtest(cfg, from_date: str, to_date: str, symbols: list[str], quiet: bool = False):
     bars_cfg = cfg.get("bars", {})
     mode = bars_cfg.get("type", "tick")
     data_dir = bars_cfg.get("data_dir")
@@ -99,6 +99,13 @@ async def backtest(cfg, from_date: str, to_date: str, symbols: list[str]):
         sim = SimState()
 
         def place(symbol: str, side: str, qty: int, type_: str):
+            nonlocal sim, last_px
+            if side == "BUY":
+                sim.buy(qty, last_px)
+            else:
+                sim.sell_all(last_px)
+        def place_rsi(symbol: str, side: str, qty: int, type_: str, price: float):
+            # Ignore price in backtest fill; use last_px for execution
             nonlocal sim, last_px
             if side == "BUY":
                 sim.buy(qty, last_px)
@@ -125,7 +132,15 @@ async def backtest(cfg, from_date: str, to_date: str, symbols: list[str]):
             last_px = px
             k, d = stoch.update(px)
             if k is None or d is None:
+                # Even if K/D not ready, RSI might be
+                rsi_val = stoch.rsi.last
+                if rsi_val is not None:
+                    trader.on_rsi(rsi_val, px, ts, place_order=place_rsi)
                 continue
+            # RSI-based buy path
+            rsi_val = stoch.rsi.last
+            if rsi_val is not None:
+                trader.on_rsi(rsi_val, px, ts, place_order=place_rsi)
             trader.on_kd(k, d, px, ts, place_order=place)
 
         unrealized = (last_px - sim.avg_px) * sim.qty if sim.qty > 0 else 0.0
@@ -148,5 +163,6 @@ async def backtest(cfg, from_date: str, to_date: str, symbols: list[str]):
             "total_unrealized_pnl": agg_unrealized,
         },
     }
-    print(out)
+    if not quiet:
+        print(out)
     return out
