@@ -12,24 +12,28 @@ import json, csv
 app = typer.Typer(help="KIS 3x ETF bot")
 
 class AppConfig(BaseModel):
-    mode: str
-    universe: list[str]
-    ws: dict
-    bars: dict
-    strategy: dict
-    slices: dict
-    risk: dict
-    execution: dict
-    postgres: dict
-    opensearch: dict
-    slack: dict
+    mode: str = "paper"
+    universe: list[str] = []
+    ws: dict = {}
+    bars: dict = {}
+    strategy: dict = {}
+    slices: dict = {}
+    risk: dict = {}
+    execution: dict | None = None
+    postgres: dict | None = None
+    opensearch: dict | None = None
+    slack: dict | None = None
+    symbols: dict | None = None
 
 @app.command()
 def run(config: Path = typer.Option(..., exists=True, readable=True)):
     cfg = AppConfig.model_validate(yaml.safe_load(config.read_text()))
-    logmod.configure_json_logging(cfg.opensearch.get("index_prefix", "bot-logs"))
-    asyncio.run(init_db(cfg.postgres["dsn"]))
-    asyncio.run(run_bot(cfg.model_dump()))
+    if cfg.opensearch:
+        logmod.configure_json_logging(cfg.opensearch.get("index_prefix", "bot-logs"))
+    cfg_dict = cfg.model_dump()
+    if cfg.postgres and cfg.postgres.get("dsn"):
+        asyncio.run(init_db(cfg.postgres["dsn"]))
+    asyncio.run(run_bot(cfg_dict))
 
 @app.command()
 def backtest(config: Path,
@@ -39,7 +43,8 @@ def backtest(config: Path,
              out_json: Path | None = None,
              out_csv: Path | None = None):
     cfg = AppConfig.model_validate(yaml.safe_load(config.read_text()))
-    logmod.configure_json_logging(cfg.opensearch.get("index_prefix", "bot-logs"))
+    if cfg.opensearch:
+        logmod.configure_json_logging(cfg.opensearch.get("index_prefix", "bot-logs"))
     res = asyncio.run(backtest(cfg.model_dump(), from_, to, symbols.split(",")))
     if out_json is not None:
         out_json.write_text(json.dumps(res, indent=2))

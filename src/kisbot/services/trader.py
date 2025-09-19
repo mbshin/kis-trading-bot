@@ -19,7 +19,7 @@ def _merge_dicts(base: dict, overlay: dict) -> dict:
 
 
 async def run_bot(cfg):
-    symbols = cfg['universe']
+    symbols = cfg.get('universe') or []
     ex = Executor(cfg)
 
     def cfg_for(sym: str) -> dict:
@@ -40,8 +40,14 @@ async def run_bot(cfg):
         # Attempt RSI-based buy path when RSI is available
         rsi_val = stoch[sym].rsi.last
         if rsi_val is not None:
-            traders[sym].on_rsi(rsi_val, price, now,
-                                place_order=lambda sy, si, q, t, px: asyncio.create_task(ex.place(sy, si, q, t, px)))
+            traders[sym].on_rsi(
+                rsi_val,
+                price,
+                now,
+                place_order=lambda sy, si, q, t, px=None: asyncio.create_task(
+                    ex.place(sy, si, q, t, px)
+                ),
+            )
         if k is None or d is None:
             return
         asyncio.create_task(crud.insert_signal(sym, side="TICK", k=k, d=d))

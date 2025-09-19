@@ -104,7 +104,7 @@ async def backtest(cfg, from_date: str, to_date: str, symbols: list[str], quiet:
                 sim.buy(qty, last_px)
             else:
                 sim.sell_all(last_px)
-        def place_rsi(symbol: str, side: str, qty: int, type_: str, price: float):
+        def place_rsi(symbol: str, side: str, qty: int, type_: str, price: Optional[float] = None):
             # Ignore price in backtest fill; use last_px for execution
             nonlocal sim, last_px
             if side == "BUY":
