@@ -1,24 +1,24 @@
 {
-  "run_id": "17f92773-8546-4d3d-b8bb-b770f07c954f",
+  "run_id": "40216ca6-6bc6-4254-a7e5-e1c2e8d7561e",
   "metrics": [
     {
       "symbol": "TQQQ",
-      "realized_pnl": 2770.63,
-      "unrealized_pnl": 0.0,
-      "position_qty_end": 0,
-      "slices_in_use_end": 0
+      "realized_pnl": 12909.98,
+      "unrealized_pnl": 310.02,
+      "position_qty_end": 394,
+      "slices_in_use_end": 56
     },
     {
       "symbol": "SOXL",
-      "realized_pnl": -2800.91,
-      "unrealized_pnl": 0.0,
-      "position_qty_end": 0,
-      "slices_in_use_end": 0
+      "realized_pnl": 5234.11,
+      "unrealized_pnl": -9545.91,
+      "position_qty_end": 835,
+      "slices_in_use_end": 60
     }
   ],
   "aggregate": {
     "symbols": 2,
-    "total_realized_pnl": -30.28,
-    "total_unrealized_pnl": 0.0
+    "total_realized_pnl": 18144.09,
+    "total_unrealized_pnl": -9235.89
   }
 }
