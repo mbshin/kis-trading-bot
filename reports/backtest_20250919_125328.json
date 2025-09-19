@@ -1,0 +1,24 @@
+{
+  "run_id": "bb071fb7-874a-418f-87cb-61e359fb9214",
+  "metrics": [
+    {
+      "symbol": "TQQQ",
+      "realized_pnl": 16767.73,
+      "unrealized_pnl": 2266.57,
+      "position_qty_end": 275,
+      "slices_in_use_end": 42
+    },
+    {
+      "symbol": "SOXL",
+      "realized_pnl": 5217.24,
+      "unrealized_pnl": -3830.44,
+      "position_qty_end": 846,
+      "slices_in_use_end": 60
+    }
+  ],
+  "aggregate": {
+    "symbols": 2,
+    "total_realized_pnl": 21984.97,
+    "total_unrealized_pnl": -1563.87
+  }
+}
