@@ -1,0 +1,4 @@
+symbol,allocated_capital,realized_pnl,unrealized_pnl,net_pnl,roi_pct,position_qty_end,slices_in_use_end,max_slices
+TQQQ,50000,5231.88,0.0,5231.88,10.5%,0,0,60
+SOXL,30000,-813.0,0.0,-813.0,-2.7%,0,0,60
+__TOTAL__,80000,4418.88,0.0,4418.88,5.5%,,,
